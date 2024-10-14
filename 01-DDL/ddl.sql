@@ -68,3 +68,26 @@ DELETE FROM parents WHERE parent_id = 1;
 -- DROP: delete an table
 DROP TABLE parents; -- won't work because there's a row in students referring the row with parent_id 1
 
+-- Create the payments table
+CREATE TABLE payments (
+    payment_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    date_paid DATETIME NOT NULL,
+    parent_id INT UNSIGNED NOT NULL,
+    FOREIGN KEY(parent_id) REFERENCES parents(parent_id),
+    student_id MEDIUMINT UNSIGNED NOT NULL,
+    FOREIGN KEY(student_id) REFERENCES students(student_id)
+) engine = innodb;
+
+-- alter the payments table to add in the amount
+-- (delibrately forget to set to as NOT NULL)
+ALTER TABLE payments ADD COLUMN amount DECIMAL(10,2);
+
+-- change the amount column that is not null
+-- modifying a column is like a PUT In RESTFul API
+ALTER TABLE payments MODIFY COLUMN amount DECIMAL(10, 2) NOT NULL;
+
+-- add a dummy columnt demonstrate dropping
+ALTER TABLE payments ADD COLUMN test VARCHAR(100);
+
+-- drop a column
+ALTER TABLE payments DROP COLUMN test;

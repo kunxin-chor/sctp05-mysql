@@ -1,4 +1,12 @@
-To start mysql, in the terminal, type in `mysql -u root`
+To start mysql, in the terminal, type in 
+```
+mysql -u root
+``` 
+or 
+
+```
+mysql -h 127.0.0.1 -u root
+```
 
 # Create a new database user
 In the MySQL CLI:
