@@ -106,3 +106,119 @@ SELECT customerName, employees.firstName, employees.lastName, offices.country, o
   ON c.salesRepEmployeeNumber = e.employeeNumber
   JOIN offices as o
   ON e.officeCode = o.officeCode;
+
+  -- Revision:
+  -- find all the orders which status is not shipped
+  -- and their comments contain 'complaint', 'complain' or 'dispute'
+  SELECT orderNumber, status, comments, orders.customerNumber, customers.customerName FROM orders
+   JOIN customers
+   ON orders.customerNumber = customers.customerNumber
+   WHERE
+	status != "Shipped" AND (comments LIKE "%complaint%" OR
+	 comments LIKE "%complain%" OR comments LIKE "%dispute%");  
+
+-- Find all the customers and their sales rep
+-- using as an INNER JOIN
+-- a row on the LHS of the join is only included in the results 
+-- if it has partner in the RHS
+SELECT COUNT(*) FROM customers JOIN employees
+ON customers.salesRepEmployeeNumber = employees.employeeNumber;
+
+--  LEFT JOIN: all the rows on the LHS of the join WILL BE INCLUDED
+-- in the results, even if there is nothing to join to in the RHS table
+SELECT * FROM customers LEFT JOIN employees
+ON customers.salesRepEmployeeNumber = employees.employeeNumber;
+
+-- FULL OUTER JOIN is a combination of LEFT JOIN and RIGHT JOIN
+-- BUT not supported by MySQL
+
+--- DATES
+-- MySQL uses the ISO date standard: YYYY-MM-DD
+-- Find all orders before 2004-01-01
+SELECT * FROM orders WHERE orderDate < "2004-01-01"
+
+-- Find all the orders in the month of June for the year 2003
+SELECT * FROM orders WHERE orderDate > "2003-05-31" AND orderDate < "2003-07-01";
+
+-- Alternatively
+SELECT * FROM orders WHERE orderDate BETWEEN "2003-06-01" AND "2003-06-30";
+
+
+-- use the YEAR(), MONTH() and DAY() functions to extract the respective component
+-- of a date
+SELECT orderNumber, YEAR(orderDate), MONTH(orderDate), DAY(orderDate) FROM orders;
+
+-- using the YEAR and MONTH function to find all orders placed in June 2003
+SELECT orderNumber, orderDate FROM orders WHERE YEAR(orderDate) = 2003 AND MONTH(orderDate) = 6;
+
+-- for every order, calculate the penalty date which is 14 days from the order date
+SELECT orderNumber, orderDate, DATE_ADD(orderDate, INTERVAL 14 DAY) FROM orders;
+
+-- Find all late orders
+select orderNumber, requiredDate, shippedDate, shippedDate - requiredDate AS "Days Late By" 
+FROM  orders WHERE shippedDate > requiredDate;
+
+-- AGGREGRATES
+-- COUNT
+-- SUM - just add up all the columns from the table
+SELECT SUM(creditLimit) FROM customers;
+
+-- AVG - AVerage
+SELECT AVG(creditLimit) FROM customers;
+
+-- MIN: must be greater than 0
+SELECT MIN(creditLimit) FROM customers WHERE creditLimit > 0;
+
+SELECT MAX(creditLimit) FROM customers;
+
+-- Find how much customerNumber 112 has paid us
+SELECT SUM(amount) FROM payments WHERE customerNumber = 112;
+
+-- REQUIREMENT: How many employees are stationed at each office
+
+-- The brute force approach
+-- 1. find all the possible office codes using DISTINCT to remove duplicates
+SELECT DISTINCT officeCode FROM employees;
+
+-- 2. for each office code, manually do a WHERE officeCode = ?
+-- for each office, count how many employees there are
+SELECT  officeCode, count(*) FROM employees
+GROUP BY officeCode;
+
+-- for each office, count how many employees there are
+
+-- 1st. figure out the column that we are grouping by
+-- 2nd. whatever column we group by, we MUST select
+-- 3rd. what are we aggregrating: COUNT, MIN, MAX, SUM, AVG
+SELECT officeCode, COUNT(*)  FROM employees
+GROUP BY officeCode;
+
+-- Find out how many customers per country:
+SELECT country, COUNT(*) FROM customers
+GROUP BY country;
+
+-- We want to know, for every customer, how much have they paid us
+SELECT customerNumber, SUM(amount) FROM payments
+GROUP BY customerNumber
+
+-- HAVING allows us to filter our groups
+-- We want to know, for every customer, how much have they paid us
+SELECT customerNumber, SUM(amount) FROM payments
+GROUP BY customerNumber
+HAVING SUM(amount) > 50000
+
+-- We can give alias to the SUM(amount) and then using HAVING on it
+SELECT customerNumber, SUM(amount) AS `Total Paid` FROM payments
+GROUP BY customerNumber
+HAVING `Total Paid` > 50000
+
+-- Only interested in those from USA and we want to sort by their contributed
+-- payment in DESCending order
+-- We want to know, for every customer, how much have they paid us
+SELECT customerName, payments.customerNumber, SUM(amount) AS `Total Paid` FROM payments
+JOIN customers ON payments.customerNumber = customers.customerNumber
+WHERE country="USA"
+GROUP BY payments.customerNumber, customerName
+HAVING `Total Paid` > 50000
+ORDER BY `Total Paid` DESC
+LIMIT 10; -- only the first ten results
